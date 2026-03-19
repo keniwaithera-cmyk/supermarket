@@ -1,0 +1,40 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">Suppliers</h2>
+    <a href="{% url 'supplier_add' %}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Supplier</a>
+</div>
+
+<div class="data-card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Supplier Name</th>
+                <th>Contact Person</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Products</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for supplier in suppliers %}
+            <tr>
+                <td style="font-weight:500;">{{ supplier.name }}</td>
+                <td>{{ supplier.contact_person|default:"—" }}</td>
+                <td style="color:var(--muted);">{{ supplier.phone|default:"—" }}</td>
+                <td style="color:var(--muted);">{{ supplier.email|default:"—" }}</td>
+                <td><span class="badge-ok">{{ supplier.product_count }}</span></td>
+                <td>
+                    <a href="{% url 'supplier_edit' supplier.pk %}" class="action-btn" title="Edit"><i class="fas fa-pen"></i></a>
+                    <a href="{% url 'supplier_delete' supplier.pk %}" class="action-btn danger ms-1" title="Delete"><i class="fas fa-trash"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="color:var(--muted);text-align:center;padding:40px;">No suppliers found. <a href="{% url 'supplier_add' %}" style="color:var(--green);">Add one</a></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">🛒 Point of Sale — Barcode Scanner</h2>
+    <span style="color:var(--muted);font-size:0.85rem;">Scan or type barcode to add items to cart</span>
+</div>
+
+<div class="row g-3">
+    <!-- Scanner & Cart -->
+    <div class="col-md-7">
+        <!-- Scan Input -->
+        <div class="data-card mb-3">
+            <div class="data-card-header">Scan Barcode</div>
+            <div class="p-3">
+                <div class="d-flex gap-2">
+                    <input type="text" id="barcodeInput" class="form-control"
+                           placeholder="Focus here and scan, or type barcode + Enter..."
+                           autofocus autocomplete="off"
+                           style="font-size:1.1rem;letter-spacing:1px;">
+                    <button onclick="lookupBarcode()" class="btn btn-primary px-4">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="scanResult" class="mt-2" style="min-height:28px;font-size:0.9rem;"></div>
+            </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="data-card">
+            <div class="data-card-header d-flex justify-content-between align-items-center">
+                <span>🛒 Cart</span>
+                <button onclick="clearCart()" class="btn btn-outline-secondary btn-sm">Clear Cart</button>
+            </div>
+            <table class="table" id="cartTable">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <tr id="emptyRow">
+                        <td colspan="5" style="color:var(--muted);text-align:center;padding:30px;">
+                            No items yet — scan a product barcode
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Checkout Panel -->
+    <div class="col-md-5">
+        <div class="data-card" style="position:sticky;top:20px;">
+            <div class="data-card-header">Checkout</div>
+            <div class="p-4">
+                <div style="background:var(--dark);border-radius:10px;padding:20px;margin-bottom:20px;">
+                    <div style="color:var(--muted);font-size:0.85rem;margin-bottom:6px;">TOTAL AMOUNT</div>
+                    <div id="totalDisplay" style="font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:var(--green);">KES 0.00</div>
+                    <div id="itemCount" style="color:var(--muted);font-size:0.85rem;">0 items</div>
+                </div>
+
+                <div class="mb-3">
+                    <label>Cashier Name</label>
+                    <input type="text" id="cashierName" class="form-control" placeholder="Enter cashier name...">
+                </div>
+
+                <form method="post" id="checkoutForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="cart_data" id="cartDataInput">
+                    <input type="hidden" name="cashier" id="cashierInput">
+                    <button type="button" onclick="submitSale()" class="btn btn-primary w-100 py-3"
+                            style="font-size:1.1rem;font-weight:700;">
+                        <i class="fas fa-check-circle me-2"></i>Complete Sale
+                    </button>
+                </form>
+
+                <div class="mt-3 pt-3" style="border-top:1px solid var(--border);">
+                    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:8px;">KEYBOARD SHORTCUTS</div>
+                    <div style="font-size:0.82rem;color:var(--muted);line-height:2;">
+                        <kbd style="background:var(--border);padding:2px 6px;border-radius:4px;">Enter</kbd> — Lookup barcode<br>
+                        <kbd style="background:var(--border);padding:2px 6px;border-radius:4px;">Esc</kbd> — Clear scan field
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cart = [];
+
+const barcodeInput = document.getElementById('barcodeInput');
+const scanResult = document.getElementById('scanResult');
+const cartBody = document.getElementById('cartBody');
+const totalDisplay = document.getElementById('totalDisplay');
+const itemCount = document.getElementById('itemCount');
+const emptyRow = document.getElementById('emptyRow');
+
+barcodeInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); lookupBarcode(); }
+    if (e.key === 'Escape') { barcodeInput.value = ''; scanResult.innerHTML = ''; }
+});
+
+async function lookupBarcode() {
+    const code = barcodeInput.value.trim();
+    if (!code) return;
+    scanResult.innerHTML = '<span style="color:var(--muted);">Looking up...</span>';
+    try {
+        const res = await fetch(`/barcode/lookup/?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
+        if (data.found) {
+            addToCart(data);
+            scanResult.innerHTML = `<span style="color:var(--green);">✅ Added: <strong>${data.name}</strong> — KES ${data.price}</span>`;
+        } else {
+            scanResult.innerHTML = `<span style="color:#ff5050;">❌ ${data.error}</span>`;
+        }
+    } catch (err) {
+        scanResult.innerHTML = `<span style="color:#ff5050;">❌ Network error. Try again.</span>`;
+    }
+    barcodeInput.value = '';
+    barcodeInput.focus();
+}
+
+function addToCart(product) {
+    const existing = cart.find(i => i.product_id === product.id);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({
+            product_id: product.id,
+            name: product.name,
+            sku: product.sku,
+            price: parseFloat(product.price),
+            quantity: 1,
+            stock: product.stock,
+        });
+    }
+    renderCart();
+}
+
+function changeQty(productId, delta) {
+    const item = cart.find(i => i.product_id === productId);
+    if (!item) return;
+    item.quantity += delta;
+    if (item.quantity <= 0) {
+        cart = cart.filter(i => i.product_id !== productId);
+    } else if (item.quantity > item.stock) {
+        item.quantity = item.stock;
+        scanResult.innerHTML = `<span style="color:#ff5050;">⚠️ Max stock for ${item.name}: ${item.stock}</span>`;
+    }
+    renderCart();
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(i => i.product_id !== productId);
+    renderCart();
+}
+
+function clearCart() {
+    cart = [];
+    renderCart();
+    scanResult.innerHTML = '';
+}
+
+function renderCart() {
+    if (cart.length === 0) {
+        emptyRow.style.display = '';
+        cartBody.querySelectorAll('.cart-row').forEach(r => r.remove());
+        totalDisplay.textContent = 'KES 0.00';
+        itemCount.textContent = '0 items';
+        return;
+    }
+    emptyRow.style.display = 'none';
+    cartBody.querySelectorAll('.cart-row').forEach(r => r.remove());
+
+    let total = 0;
+    let totalItems = 0;
+
+    cart.forEach(item => {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+        totalItems += item.quantity;
+        const tr = document.createElement('tr');
+        tr.className = 'cart-row';
+        tr.innerHTML = `
+            <td>
+                <div style="font-weight:500;">${item.name}</div>
+                <div style="color:var(--muted);font-size:0.78rem;">${item.sku}</div>
+            </td>
+            <td>KES ${item.price.toFixed(2)}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <button onclick="changeQty(${item.product_id}, -1)" class="action-btn" style="font-size:1rem;width:28px;height:28px;">−</button>
+                    <span style="font-weight:600;min-width:24px;text-align:center;">${item.quantity}</span>
+                    <button onclick="changeQty(${item.product_id}, 1)" class="action-btn" style="font-size:1rem;width:28px;height:28px;">+</button>
+                </div>
+            </td>
+            <td style="color:var(--green);font-weight:600;">KES ${subtotal.toFixed(2)}</td>
+            <td>
+                <button onclick="removeFromCart(${item.product_id})" class="action-btn danger" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+        cartBody.appendChild(tr);
+    });
+
+    totalDisplay.textContent = `KES ${total.toFixed(2)}`;
+    itemCount.textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+}
+
+function submitSale() {
+    if (cart.length === 0) {
+        alert('Cart is empty. Please scan items first.');
+        return;
+    }
+    document.getElementById('cartDataInput').value = JSON.stringify(cart);
+    document.getElementById('cashierInput').value = document.getElementById('cashierName').value;
+    document.getElementById('checkoutForm').submit();
+}
+
+// Auto-focus scanner on page load
+window.addEventListener('load', () => barcodeInput.focus());
+// Re-focus after clicking elsewhere
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('input, button, select')) barcodeInput.focus();
+});
+</script>
+{% endblock %}

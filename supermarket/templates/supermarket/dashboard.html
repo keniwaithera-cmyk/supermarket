@@ -1,0 +1,425 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">🛒 Sales Dashboard</h2>
+    <span style="color:var(--muted);font-size:0.85rem;">Scan or select items · Accept payment · Print receipt</span>
+</div>
+
+<!-- ── Top Stats ── -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-box"></i></div>
+            <div class="stat-value">{{ total_products }}</div>
+            <div class="stat-label">Products</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(0,120,255,0.12);color:#4f8ff7;"><i class="fas fa-file-invoice"></i></div>
+            <div class="stat-value" style="color:#4f8ff7;">KES {{ total_sales_value|floatformat:0 }}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-value">KES {{ inventory_value|floatformat:0 }}</div>
+            <div class="stat-label">Inventory Value</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="{% if low_stock > 0 %}border-color:rgba(255,80,80,0.4);{% endif %}">
+            <div class="stat-icon" style="{% if low_stock > 0 %}background:rgba(255,80,80,0.12);color:#ff5050;{% endif %}">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-value" style="{% if low_stock > 0 %}color:#ff5050;{% endif %}">{{ low_stock }}</div>
+            <div class="stat-label">Low Stock</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Main Layout: POS left, Checkout right ── -->
+<div class="row g-3 mb-4">
+
+    <!-- LEFT: Barcode scan + product picker + cart -->
+    <div class="col-lg-7">
+
+        <!-- Barcode Scanner -->
+        <div class="data-card mb-3">
+            <div class="data-card-header"><i class="fas fa-barcode me-2"></i>Scan Barcode / Search Product</div>
+            <div class="p-3">
+                <div class="d-flex gap-2">
+                    <input type="text" id="barcodeInput" class="form-control"
+                           placeholder="Scan barcode or type product name / SKU..."
+                           autofocus autocomplete="off" style="font-size:1rem;">
+                    <button onclick="lookupBarcode()" class="btn btn-primary px-3">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="scanResult" style="min-height:22px;margin-top:8px;font-size:0.88rem;"></div>
+
+                <!-- Search suggestions dropdown -->
+                <div id="suggestions" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:200px;overflow-y:auto;"></div>
+            </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="data-card">
+            <div class="data-card-header d-flex justify-content-between align-items-center">
+                <span>🛒 Cart</span>
+                <button onclick="clearCart()" class="btn btn-outline-secondary btn-sm">Clear Cart</button>
+            </div>
+            <table class="table" id="cartTable">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit Price</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <tr id="emptyRow">
+                        <td colspan="5" style="color:var(--muted);text-align:center;padding:30px;">
+                            <i class="fas fa-shopping-cart" style="font-size:1.5rem;margin-bottom:8px;display:block;opacity:0.3;"></i>
+                            Cart is empty — scan a barcode or pick a product
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RIGHT: Payment + Checkout -->
+    <div class="col-lg-5">
+        <div class="data-card" style="position:sticky;top:20px;">
+            <div class="data-card-header" style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;">
+                💳 Payment & Receipt
+            </div>
+            <div class="p-4">
+
+                <!-- Bill Summary -->
+                <div style="background:var(--dark);border-radius:10px;padding:16px;margin-bottom:18px;">
+                    <div class="d-flex justify-content-between mb-2" style="font-size:0.88rem;">
+                        <span style="color:var(--muted);">Subtotal</span>
+                        <span id="subtotalDisplay">KES 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2" style="font-size:0.88rem;">
+                        <span style="color:var(--muted);">VAT (<span id="taxRateLabel">16</span>%)</span>
+                        <span id="taxDisplay">KES 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between pt-2" style="border-top:1px solid var(--border);">
+                        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;">TOTAL</span>
+                        <span id="totalDisplay" style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--green);">KES 0.00</span>
+                    </div>
+                </div>
+
+                <!-- Cashier + VAT -->
+                <div class="row g-2 mb-3">
+                    <div class="col-7">
+                        <label>Cashier Name</label>
+                        <input type="text" id="cashierName" class="form-control" placeholder="Enter name...">
+                    </div>
+                    <div class="col-5">
+                        <label>VAT %</label>
+                        <input type="number" id="taxRate" class="form-control" value="16" min="0" max="100" oninput="updateTotals()">
+                    </div>
+                </div>
+
+                <!-- Amount Paid -->
+                <div class="mb-2">
+                    <label>💵 Amount Paid (KES)</label>
+                    <input type="number" id="amountPaid" class="form-control"
+                           placeholder="Enter cash received..." step="0.01" min="0"
+                           oninput="updateChange()"
+                           style="font-size:1.2rem;font-weight:600;height:50px;">
+                </div>
+
+                <!-- Quick cash buttons -->
+                <div class="d-flex gap-2 mb-3 flex-wrap">
+                    <button onclick="setQuickCash(100)"  class="btn btn-outline-secondary btn-sm flex-fill">100</button>
+                    <button onclick="setQuickCash(200)"  class="btn btn-outline-secondary btn-sm flex-fill">200</button>
+                    <button onclick="setQuickCash(500)"  class="btn btn-outline-secondary btn-sm flex-fill">500</button>
+                    <button onclick="setQuickCash(1000)" class="btn btn-outline-secondary btn-sm flex-fill">1000</button>
+                    <button onclick="setExactCash()"     class="btn btn-outline-secondary btn-sm flex-fill">Exact</button>
+                </div>
+
+                <!-- Change -->
+                <div style="border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;background:var(--dark);">
+                    <span style="color:var(--muted);">Change Due</span>
+                    <span id="changeDisplay" style="font-size:1.4rem;font-weight:800;color:#4f8ff7;">KES 0.00</span>
+                </div>
+
+                <!-- Submit -->
+                <form method="post" id="saleForm" action="/">
+                    {% csrf_token %}
+                    <input type="hidden" name="cart_data"    id="cartDataInput">
+                    <input type="hidden" name="cashier"      id="cashierInput">
+                    <input type="hidden" name="amount_paid"  id="amountPaidInput">
+                    <input type="hidden" name="tax_rate"     id="taxRateInput">
+                    <button type="button" onclick="submitSale()"
+                            class="btn btn-primary w-100 py-3"
+                            style="font-size:1.05rem;font-weight:700;letter-spacing:0.5px;">
+                        <i class="fas fa-check-circle me-2"></i>Complete Sale &amp; Print Receipt
+                    </button>
+                </form>
+
+                <div class="mt-3 pt-3" style="border-top:1px solid var(--border);font-size:0.78rem;color:var(--muted);">
+                    <kbd style="background:var(--border);padding:2px 6px;border-radius:4px;color:var(--text);">Enter</kbd> Scan &nbsp;
+                    <kbd style="background:var(--border);padding:2px 6px;border-radius:4px;color:var(--text);">Esc</kbd> Clear &nbsp;
+                    Receipt prints automatically after sale ✅
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Bottom Row: Recent Receipts + Low Stock ── -->
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="data-card">
+            <div class="data-card-header d-flex justify-content-between align-items-center">
+                Recent Receipts
+                <a href="{% url 'receipt_list' %}" style="color:var(--green);font-size:0.82rem;text-decoration:none;">View all →</a>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Receipt #</th>
+                        <th>Cashier</th>
+                        <th>Total</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for receipt in recent_receipts %}
+                    <tr>
+                        <td style="font-family:monospace;font-size:0.85rem;font-weight:600;">{{ receipt.receipt_number }}</td>
+                        <td>{{ receipt.cashier|default:"—" }}</td>
+                        <td style="color:var(--green);font-weight:600;">KES {{ receipt.grand_total }}</td>
+                        <td style="color:var(--muted);font-size:0.82rem;">{{ receipt.created_at|date:"M d, H:i" }}</td>
+                        <td>
+                            <a href="{% url 'receipt_detail' receipt.pk %}" class="action-btn" title="Print">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">No receipts yet — complete a sale above.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="data-card">
+            <div class="data-card-header" style="color:#ff5050;">⚠️ Low Stock Alert</div>
+            <table class="table">
+                <thead><tr><th>Product</th><th>Stock</th></tr></thead>
+                <tbody>
+                    {% for product in low_stock_products %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td><span class="badge-low">{{ product.stock_quantity }} left</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" style="color:var(--muted);text-align:center;padding:24px;">All products well stocked ✅</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ── All products data for JS search ── -->
+<script>
+const ALL_PRODUCTS = [
+    {% for p in all_products %}
+    { id: {{ p.pk }}, name: "{{ p.name|escapejs }}", sku: "{{ p.sku|escapejs }}", barcode: "{{ p.barcode_number|escapejs }}", price: {{ p.price }}, stock: {{ p.stock_quantity }} },
+    {% endfor %}
+];
+
+let cart = [];
+
+const barcodeInput  = document.getElementById('barcodeInput');
+const scanResult    = document.getElementById('scanResult');
+const cartBody      = document.getElementById('cartBody');
+const emptyRow      = document.getElementById('emptyRow');
+const suggestions   = document.getElementById('suggestions');
+
+// ── Scanner input handling ──
+barcodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); lookupBarcode(); hideSuggestions(); }
+    if (e.key === 'Escape') { barcodeInput.value = ''; scanResult.innerHTML = ''; hideSuggestions(); }
+});
+
+barcodeInput.addEventListener('input', () => {
+    const q = barcodeInput.value.trim().toLowerCase();
+    if (q.length < 1) { hideSuggestions(); return; }
+    const matches = ALL_PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.barcode.toLowerCase().includes(q)
+    ).slice(0, 8);
+    if (matches.length === 0) { hideSuggestions(); return; }
+    suggestions.innerHTML = matches.map(p => `
+        <div onclick="pickProduct(${p.id})"
+             style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;"
+             onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+             onmouseout="this.style.background='transparent'">
+            <div>
+                <div style="font-weight:500;font-size:0.9rem;">${p.name}</div>
+                <div style="color:var(--muted);font-size:0.75rem;">${p.sku}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:var(--green);font-weight:600;">KES ${p.price.toFixed(2)}</div>
+                <div style="color:var(--muted);font-size:0.75rem;">${p.stock} in stock</div>
+            </div>
+        </div>
+    `).join('');
+    suggestions.style.display = 'block';
+});
+
+function hideSuggestions() { suggestions.style.display = 'none'; }
+document.addEventListener('click', e => { if (!e.target.closest('#barcodeInput,#suggestions')) hideSuggestions(); });
+
+function pickProduct(id) {
+    const p = ALL_PRODUCTS.find(x => x.id === id);
+    if (p) { addToCart(p); scanResult.innerHTML = `<span style="color:var(--green);">✅ Added: <strong>${p.name}</strong></span>`; }
+    barcodeInput.value = '';
+    hideSuggestions();
+    barcodeInput.focus();
+}
+
+async function lookupBarcode() {
+    const code = barcodeInput.value.trim();
+    if (!code) return;
+    // First try local match
+    const local = ALL_PRODUCTS.find(p => p.sku === code || p.barcode === code);
+    if (local) { addToCart(local); scanResult.innerHTML = `<span style="color:var(--green);">✅ Added: <strong>${local.name}</strong></span>`; barcodeInput.value=''; barcodeInput.focus(); return; }
+    // Fallback to API
+    scanResult.innerHTML = '<span style="color:var(--muted);">Searching...</span>';
+    try {
+        const res  = await fetch(`/barcode/lookup/?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
+        if (data.found) {
+            addToCart(data);
+            scanResult.innerHTML = `<span style="color:var(--green);">✅ Added: <strong>${data.name}</strong> — KES ${data.price}</span>`;
+        } else {
+            scanResult.innerHTML = `<span style="color:#ff5050;">❌ ${data.error}</span>`;
+        }
+    } catch { scanResult.innerHTML = `<span style="color:#ff5050;">❌ Network error.</span>`; }
+    barcodeInput.value = '';
+    barcodeInput.focus();
+}
+
+function addToCart(product) {
+    const id  = product.id || product.product_id;
+    const existing = cart.find(i => i.product_id === id);
+    if (existing) {
+        if (existing.quantity < existing.stock) existing.quantity++;
+        else { scanResult.innerHTML = `<span style="color:#ff5050;">⚠️ Max stock reached for ${existing.name}</span>`; return; }
+    } else {
+        cart.push({ product_id: id, name: product.name, sku: product.sku || '', price: parseFloat(product.price), quantity: 1, stock: product.stock });
+    }
+    renderCart();
+}
+
+function changeQty(productId, delta) {
+    const item = cart.find(i => i.product_id === productId);
+    if (!item) return;
+    item.quantity = Math.max(0, Math.min(item.quantity + delta, item.stock));
+    if (item.quantity === 0) cart = cart.filter(i => i.product_id !== productId);
+    renderCart();
+}
+
+function removeFromCart(productId) { cart = cart.filter(i => i.product_id !== productId); renderCart(); }
+function clearCart() { cart = []; renderCart(); scanResult.innerHTML = ''; }
+
+function getTaxRate()  { return parseFloat(document.getElementById('taxRate').value) || 0; }
+function getSubtotal() { return cart.reduce((s, i) => s + i.price * i.quantity, 0); }
+function getGrandTotal(){ const s = getSubtotal(); return s + s * (getTaxRate()/100); }
+
+function updateTotals() {
+    const sub   = getSubtotal();
+    const tax   = sub * (getTaxRate() / 100);
+    const grand = sub + tax;
+    document.getElementById('subtotalDisplay').textContent = `KES ${sub.toFixed(2)}`;
+    document.getElementById('taxDisplay').textContent      = `KES ${tax.toFixed(2)}`;
+    document.getElementById('totalDisplay').textContent    = `KES ${grand.toFixed(2)}`;
+    document.getElementById('taxRateLabel').textContent    = getTaxRate();
+    updateChange();
+}
+
+function updateChange() {
+    const grand  = getGrandTotal();
+    const paid   = parseFloat(document.getElementById('amountPaid').value) || 0;
+    const change = Math.max(0, paid - grand);
+    const el     = document.getElementById('changeDisplay');
+    el.textContent   = `KES ${change.toFixed(2)}`;
+    el.style.color   = paid >= grand && paid > 0 ? 'var(--green)' : '#4f8ff7';
+}
+
+function setQuickCash(amount) {
+    document.getElementById('amountPaid').value = amount;
+    updateChange();
+}
+function setExactCash() {
+    document.getElementById('amountPaid').value = getGrandTotal().toFixed(2);
+    updateChange();
+}
+
+function renderCart() {
+    cartBody.querySelectorAll('.cart-row').forEach(r => r.remove());
+    emptyRow.style.display = cart.length === 0 ? '' : 'none';
+    cart.forEach(item => {
+        const sub = item.price * item.quantity;
+        const tr  = document.createElement('tr');
+        tr.className = 'cart-row';
+        tr.innerHTML = `
+            <td>
+                <div style="font-weight:500;">${item.name}</div>
+                <div style="color:var(--muted);font-size:0.75rem;">${item.sku}</div>
+            </td>
+            <td>KES ${item.price.toFixed(2)}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:5px;">
+                    <button onclick="changeQty(${item.product_id},-1)" class="action-btn" style="width:26px;height:26px;font-size:0.9rem;">−</button>
+                    <span style="font-weight:700;min-width:22px;text-align:center;">${item.quantity}</span>
+                    <button onclick="changeQty(${item.product_id},1)"  class="action-btn" style="width:26px;height:26px;font-size:0.9rem;">+</button>
+                </div>
+            </td>
+            <td style="color:var(--green);font-weight:600;">KES ${sub.toFixed(2)}</td>
+            <td><button onclick="removeFromCart(${item.product_id})" class="action-btn danger"><i class="fas fa-times"></i></button></td>
+        `;
+        cartBody.appendChild(tr);
+    });
+    updateTotals();
+}
+
+function submitSale() {
+    if (cart.length === 0) { alert('Cart is empty. Add items first.'); barcodeInput.focus(); return; }
+    const paid  = parseFloat(document.getElementById('amountPaid').value) || 0;
+    const grand = getGrandTotal();
+    if (paid > 0 && paid < grand) {
+        if (!confirm(`Amount paid (KES ${paid.toFixed(2)}) is less than total (KES ${grand.toFixed(2)}). Continue?`)) return;
+    }
+    document.getElementById('cartDataInput').value   = JSON.stringify(cart);
+    document.getElementById('cashierInput').value    = document.getElementById('cashierName').value;
+    document.getElementById('amountPaidInput').value = paid;
+    document.getElementById('taxRateInput').value    = getTaxRate();
+    document.getElementById('saleForm').submit();
+}
+
+// Auto-focus scanner on load
+window.addEventListener('load', () => barcodeInput.focus());
+document.addEventListener('click', e => {
+    if (!e.target.closest('input,button,select,a,#suggestions')) barcodeInput.focus();
+});
+</script>
+{% endblock %}
