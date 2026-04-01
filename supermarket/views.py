@@ -14,7 +14,7 @@ def dashboard(request):
     if request.method == 'POST':
         try:
             cart        = json.loads(request.POST.get('cart_data', '[]'))
-            cashier     = request.POST.get('cashier', '')
+            cashier     = request.POST.get('cashier', 'lilian,john')
             amount_paid = float(request.POST.get('amount_paid', 0) or 0)
             tax_rate    = float(request.POST.get('tax_rate', 16) or 16)
             if not cart:
@@ -91,7 +91,7 @@ def pos_sale(request):
             cart        = json.loads(request.POST.get('cart_data', '[]'))
             cashier     = request.POST.get('cashier', '')
             amount_paid = float(request.POST.get('amount_paid', 0) or 0)
-            tax_rate    = float(request.POST.get('tax_rate', 16) or 16)
+            tax_rate    = float(request.POST.get('tax_rate', 0) or 0)
             if not cart:
                 messages.error(request, 'Cart is empty.')
                 return redirect('pos_sale')

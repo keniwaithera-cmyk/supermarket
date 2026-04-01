@@ -1,0 +1,103 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+
+    <style>
+        body {
+            font-family: "Courier New", monospace;
+            width: 280px;
+            margin: auto;
+            font-size: 13px;
+        }
+
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .bold { font-weight: bold; }
+
+        hr {
+            border: none;
+            border-top: 1px dashed black;
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        td {
+            padding: 2px 0;
+        }
+
+        .total-line td {
+            border-top: 1px dashed black;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body onload="window.print()">
+
+    <!-- HEADER -->
+    <div class="center">
+        <h3>Elshadai  SUPERMARKET</h3>
+        <p>Nairobi  </p>
+        <hr>
+    </div>
+
+    <!-- RECEIPT INFO -->
+    <p>Receipt No: {{ receipt.receipt_number }}</p>
+    <p>Date: {{ receipt.created_at|date:"Y-m-d H:i" }}</p>
+    <p>Cashier: {{ receipt.cashier }}</p>
+
+    <hr>
+
+    <!-- ITEMS -->
+    <table>
+        {% for item in receipt.items.all %}
+        <tr>
+            <td colspan="3">{{ item.product_name }}</td>
+        </tr>
+        <tr>
+            <td>{{ item.quantity }} x {{ item.unit_price }}</td>
+            <td></td>
+            <td class="right">{{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <hr>
+
+    <!-- TOTALS -->
+    <table>
+        <tr>
+            <td>Subtotal</td>
+            <td class="right">{{ receipt.total_amount }}</td>
+        </tr>
+        <tr>
+            <td>VAT ({{ receipt.tax_rate }}%)</td>
+            <td class="right">{{ receipt.tax_amount }}</td>
+        </tr>
+        <tr class="total-line">
+            <td>TOTAL</td>
+            <td class="right">{{ receipt.grand_total }}</td>
+        </tr>
+        <tr>
+            <td>Paid</td>
+            <td class="right">{{ receipt.amount_paid }}</td>
+        </tr>
+        <tr>
+            <td>Change</td>
+            <td class="right">{{ receipt.change_given }}</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <!-- FOOTER -->
+    <div class="center">
+        <p>Thank you for shopping with us</p>
+        <p class="bold">*** WELCOME AGAIN ***</p>
+        <p>Goods once sold are not returnable</p>
+    </div>
+
+{% endblock %}

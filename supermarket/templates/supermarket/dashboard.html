@@ -1,9 +1,10 @@
 {% extends 'supermarket/base.html' %}
 
 {% block content %}
+    <H1>eLSHADAI SUPER MARKET</H1>
 <div class="page-header">
     <h2 class="page-title">🛒 Sales Dashboard</h2>
-    <span style="color:var(--muted);font-size:0.85rem;">Scan or select items · Accept payment · Print receipt</span>
+    <span style="color: darkviolet;font-size:0.85rem;">Scan or select items · Accept payment · Print receipt</span>
 </div>
 
 <!-- ── Top Stats ── -->
@@ -416,7 +417,7 @@ function submitSale() {
     document.getElementById('saleForm').submit();
 }
 
-// Auto-focus scanner on load
+
 window.addEventListener('load', () => barcodeInput.focus());
 document.addEventListener('click', e => {
     if (!e.target.closest('input,button,select,a,#suggestions')) barcodeInput.focus();
