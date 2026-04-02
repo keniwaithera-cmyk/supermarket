@@ -231,5 +231,36 @@ window.addEventListener('load', () => barcodeInput.focus());
 document.addEventListener('click', (e) => {
     if (!e.target.closest('input, button, select')) barcodeInput.focus();
 });
+
+</script>
+    <script>
+function submitPOSForm(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.url)
+    .then(url => {
+        if (url.includes('/receipts/')) {
+            // Open thermal receipt in new window
+            window.open(url + '?print=thermal', '_blank', 'width=400,height=600');
+
+            // Clear the cart
+            cart = [];
+            renderCart();  // Assuming you have a function that updates the cart UI
+        } else {
+            window.location.href = url; // fallback
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Attach the submit handler
+document.getElementById('posForm').addEventListener('submit', submitPOSForm);
 </script>
 {% endblock %}

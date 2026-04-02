@@ -34,4 +34,7 @@ urlpatterns = [
     # Sales
     path('sales/', views.sale_list, name='sale_list'),
     path('sales/add/', views.sale_add, name='sale_add'),
+    path('mpesa/pay/', views.send_stk_push, name='stk_push'),
+    path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
+    path('mpesa/status/', views.mpesa_payment_status, name='mpesa_status'),
 ]

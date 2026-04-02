@@ -16,6 +16,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'supermarket',
+    'django_daraja',
+
 ]
 
 MIDDLEWARE = [
@@ -76,3 +78,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# M-Pesa Daraja API credentials
+MPESA_ENVIRONMENT = 'sandbox'  # change to 'production' when going live
+
+MPESA_CONSUMER_KEY = 't3qkaGqEaUABpgsJr9eenFFOkqpAAWoRmlkQ1b2Wgc17ibij'
+MPESA_CONSUMER_SECRET = 'Q32siYmwgAoxZTosXbYTRgqS2usntUNKORKufvUkNwxbLrB15Kk8Yvvrmk6w07zh'
+MPESA_EXPRESS_SHORTCODE = '174379'
+MPESA_SHORTCODE_TYPE = 'paybill'  # or ''
+MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+
+MPESA_CALLBACK_URL = 'https://your-ngrok-url.ngrok.io/mpesa/callback/ '
