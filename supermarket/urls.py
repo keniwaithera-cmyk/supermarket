@@ -1,6 +1,14 @@
 from django.urls import path
 from . import views
+from django.urls import path
+from django.http import FileResponse
+from django.conf import settings
+from . import views
+import os
 
+def serve_sw(request):
+    sw_path = os.path.join(settings.BASE_DIR, 'supermarket', 'static', 'sw.js')
+    return FileResponse(open(sw_path, 'rb'), content_type='application/javascript')
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
 
@@ -12,7 +20,7 @@ urlpatterns = [
     # Receipts
     path('receipts/', views.receipt_list, name='receipt_list'),
     path('receipts/<int:pk>/', views.receipt_detail, name='receipt_detail'),
-
+    path('sw.js', serve_sw, name='sw'),
     # Products
     path('products/', views.product_list, name='product_list'),
     path('products/add/', views.product_add, name='product_add'),
