@@ -1,0 +1,111 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+<!-- supermarket/templates/supermarket/receipt_thermal.html -->
+
+    <title>Receipt - {{ receipt.receipt_number }}</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 12px;
+            width: 80mm; /* fits standard thermal printers */
+            margin: 0 auto;
+            padding: 5px;
+        }
+        .center {
+            text-align: center;
+        }
+        .line {
+            border-bottom: 1px dashed #000;
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 2px 0;
+        }
+        tfoot td {
+            font-weight: bold;
+        }
+        .qr {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .small {
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <h3>Supermarket POS</h3>
+        <p class="small">Receipt #: {{ receipt.receipt_number }}</p>
+        <p class="small">Cashier: {{ receipt.cashier }}</p>
+        <p class="small">Date: {{ receipt.created_at|date:"d-m-Y H:i" }}</p>
+    </div>
+
+    <div class="line"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th class="center">Qty</th>
+                <th class="center">Price</th>
+                <th class="center">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in receipt.items.all %}
+            <tr>
+                <td>{{ item.product_name|truncatechars:15 }}</td>
+                <td class="center">{{ item.quantity }}</td>
+                <td class="center">{{ item.unit_price|floatformat:2 }}</td>
+                <td class="center">{{ item.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="line"></div>
+
+    <table>
+        <tfoot>
+            <tr>
+                <td colspan="3">Subtotal</td>
+                <td class="center">{{ receipt.total_amount|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="3">Tax ({{ receipt.tax_rate }}%)</td>
+                <td class="center">{{ receipt.tax_amount|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="3">Grand Total</td>
+                <td class="center">{{ receipt.grand_total|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="3">Paid</td>
+                <td class="center">{{ receipt.amount_paid|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="3">Change</td>
+                <td class="center">{{ receipt.change_given|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    {% if promptpay_qr %}
+    <div class="qr">
+        <p class="small">Scan to pay via PromptPay</p>
+        <img src="data:image/png;base64,{{ promptpay_qr }}" alt="PromptPay QR" width="120">
+    </div>
+    {% endif %}
+
+    <div class="center small">
+        Thank you for shopping with us!
+    </div>
+
+{% endblock %}

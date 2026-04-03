@@ -1,0 +1,1373 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,300;400;500&family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --green: #5B9BD5;
+    --green-light: #DDEEFF;
+    --green-dark: #2563A8;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --blue: #5B9BD5;
+    --blue-light: #DDEEFF;
+    --amber: #E9A0C2;
+    --amber-light: #FDEDF5;
+    --bg: #EDF4FB;
+    --surface: #FFFFFF;
+    --surface-2: #F0F7FF;
+    --border: rgba(91,155,213,0.18);
+    --border-strong: rgba(91,155,213,0.32);
+    --text: #162235;
+    --muted: #7A94B0;
+    --accent: #D4537E;
+    --accent-light: #FBEAF0;
+    --accent-dark: #99355A;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --serif: 'Fraunces', serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 4px rgba(91,155,213,0.10), 0 1px 2px rgba(91,155,213,0.07);
+    --shadow-md: 0 4px 16px rgba(91,155,213,0.13), 0 2px 4px rgba(91,155,213,0.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body, .pos-wrap { font-family: var(--sans); color: var(--text); background: var(--bg); }
+
+  /* ── Page Header ── */
+  .pos-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .pos-brand { display: flex; flex-direction: column; gap: 2px; }
+  .pos-brand-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .pos-brand-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+  }
+  .pos-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .header-pill {
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border-strong);
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+  .header-pill.active {
+    background: var(--green-light);
+    color: var(--green-dark);
+    border-color: #85B7EB;
+  }
+
+  /* ── Stat Row ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: var(--shadow);
+  }
+  .stat-tile-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .stat-tile-icon.green  { background: var(--green-light); color: var(--green-dark); }
+  .stat-tile-icon.blue   { background: #DDEEFF;  color: #2563A8; }
+  .stat-tile-icon.amber  { background: var(--accent-light); color: var(--accent-dark); }
+  .stat-tile-icon.red    { background: var(--red-light);   color: #A32D2D; }
+  .stat-tile-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .stat-tile-value.danger { color: var(--red); }
+  .stat-tile-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Main Grid ── */
+  .pos-main {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title-icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+
+  /* ── Scan Row ── */
+  .scan-row {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    background: #F0F7FF;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .scan-input {
+    flex: 1;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--mono);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .scan-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(91,155,213,0.18);
+  }
+  .scan-input::placeholder { color: var(--muted); font-size: 13px; }
+  .scan-btn {
+    height: 42px;
+    width: 42px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .scan-btn:hover { opacity: 0.82; }
+
+  #scanResult { padding: 6px 18px; min-height: 30px; font-size: 13px; font-family: var(--mono); }
+  #scanResult .ok  { color: var(--green-dark); }
+  #scanResult .err { color: var(--red); }
+
+  /* ── Suggestions ── */
+  #suggestions {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    max-height: 220px;
+    overflow-y: auto;
+    position: relative;
+    z-index: 100;
+  }
+  .suggest-item {
+    padding: 10px 18px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.1s;
+  }
+  .suggest-item:hover { background: var(--surface-2); }
+  .suggest-item:last-child { border-bottom: none; }
+  .suggest-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .suggest-sku  { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .suggest-price { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--green-dark); text-align: right; }
+  .suggest-stock { font-size: 11px; color: var(--muted); text-align: right; margin-top: 2px; }
+
+  /* ── Cart Table ── */
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .cart-table thead th {
+    padding: 10px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: #F0F7FF;
+  }
+  .cart-table tbody tr { border-bottom: 1px solid var(--border); }
+  .cart-table tbody tr:last-child { border-bottom: none; }
+  .cart-table tbody td { padding: 12px 18px; vertical-align: middle; }
+  .cart-item-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .cart-item-sku  { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .cart-subtotal  { font-family: var(--mono); font-weight: 500; color: var(--green-dark); }
+  .empty-cart {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .empty-cart svg { display: block; margin: 0 auto 10px; opacity: 0.25; }
+
+  /* ── Qty Controls ── */
+  .qty-ctrl { display: flex; align-items: center; gap: 6px; }
+  .qty-btn {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s;
+  }
+  .qty-btn:hover { background: #E3E2DA; }
+  .qty-num { font-family: var(--mono); font-size: 14px; font-weight: 500; min-width: 24px; text-align: center; }
+  .remove-btn {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: background 0.1s, color 0.1s;
+  }
+  .remove-btn:hover { background: var(--red-light); color: var(--red); }
+
+  /* ── Clear Cart btn ── */
+  .clear-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+  }
+  .clear-btn:hover { background: var(--red-light); color: var(--red); border-color: #f09595; }
+
+  /* ── Checkout Panel ── */
+  .checkout-panel {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ── Bill Summary ── */
+  .bill-summary {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .bill-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .bill-row .label { color: var(--muted); }
+  .bill-row .value { font-family: var(--mono); font-size: 13px; }
+  .bill-divider { height: 1px; background: var(--border-strong); margin: 4px 0; }
+  .bill-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 4px;
+  }
+  .bill-total-label { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .bill-total-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--green-dark);
+    letter-spacing: -1px;
+  }
+
+  /* ── Form Fields ── */
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .field-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--sans);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  .field-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(91,155,213,0.18);
+  }
+  .field-input.mono { font-family: var(--mono); }
+  .field-input.large { height: 52px; font-size: 20px; font-family: var(--mono); font-weight: 500; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
+
+  /* ── Quick Cash ── */
+  .quick-cash {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .qc-btn {
+    padding: 7px 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    text-align: center;
+  }
+  .qc-btn:hover { background: var(--green-light); border-color: #85B7EB; color: var(--green-dark); }
+
+  /* ── Change ── */
+  .change-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--accent-light);
+    border-radius: var(--radius-sm);
+    border: 1px solid #F4C0D1;
+  }
+  .change-label { font-size: 12px; font-weight: 600; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 0.06em; }
+  .change-value { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--accent-dark); letter-spacing: -0.5px; }
+  .change-value.exact { color: var(--green-dark); }
+
+  /* ── Submit Btn ── */
+  .submit-btn {
+    width: 100%;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: linear-gradient(135deg, var(--accent) 0%, #5B9BD5 100%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .submit-btn:hover   { opacity: 0.88; }
+  .submit-btn:active  { transform: scale(0.99); }
+
+  .kbd-hint {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+  .kbd { background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 2px 6px; font-family: var(--mono); font-size: 10px; color: var(--text); }
+
+  /* ── M-Pesa Panel ── */
+  .mpesa-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .mpesa-hd {
+    background: linear-gradient(135deg, #99355A 0%, #5B9BD5 100%);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .mpesa-hd-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .mpesa-hd-title { color: #fff; font-size: 14px; font-weight: 600; }
+  .mpesa-hd-sub   { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; font-family: var(--mono); }
+  .mpesa-body     { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+  .mpesa-send-btn {
+    width: 100%;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s;
+  }
+  .mpesa-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .mpesa-send-btn:hover:not(:disabled) { opacity: 0.88; }
+
+  .mpesa-status { border-radius: var(--radius-sm); padding: 12px 14px; display: none; border: 1px solid var(--border); }
+  .mpesa-status.pending { background: var(--surface-2); }
+  .mpesa-status.success { background: var(--green-light); border-color: #9FE1CB; }
+  .mpesa-status.failed  { background: var(--red-light);   border-color: #f09595; }
+  .mpesa-status-row { display: flex; align-items: center; gap: 10px; }
+  .mpesa-sicon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .mpesa-sicon.pending { background: #D3D1C7; color: #444; }
+  .mpesa-sicon.success { background: #9FE1CB; color: #085041; }
+  .mpesa-sicon.failed  { background: #f7c1c1; color: #791F1F; }
+  .mpesa-stext  { font-size: 13px; font-weight: 600; color: var(--text); }
+  .mpesa-ssub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .mpesa-timer  { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; font-family: var(--mono); }
+
+  .mpesa-receipt { border-radius: var(--radius-sm); padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border); display: none; }
+  .mpesa-rrow { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .mpesa-rrow:last-child { border-bottom: none; }
+  .mpesa-rl { color: var(--muted); }
+  .mpesa-rv { font-weight: 500; color: var(--text); font-family: var(--mono); }
+  .mpesa-rv.green { color: var(--green-dark); }
+  .mpesa-reset { width: 100%; padding: 9px; background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--muted); font-size: 12px; cursor: pointer; margin-top: 8px; display: none; }
+  .mpesa-reset:hover { background: var(--surface-2); }
+
+  .mdots span { animation: mpulse 1.2s ease-in-out infinite; }
+  .mdots span:nth-child(2) { animation-delay: 0.2s; }
+  .mdots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes mpulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── Bottom Row ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    margin-top: 24px;
+  }
+
+  /* ── Table shared styles ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table thead th {
+    padding: 10px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: #F0F7FF;
+  }
+  .data-table tbody td { padding: 12px 18px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:hover { background: #EDF4FB; }
+  .mono-cell { font-family: var(--mono); }
+  .green-cell { color: var(--green-dark); font-family: var(--mono); font-weight: 500; }
+  .muted-cell { color: var(--muted); font-size: 12px; }
+  .empty-row td { color: var(--muted); text-align: center; padding: 32px; font-size: 13px; }
+
+  .badge-low {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: var(--red-light);
+    color: #A32D2D;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    border: 1px solid #f09595;
+  }
+  .print-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    transition: background 0.1s;
+    text-decoration: none;
+  }
+  .print-btn:hover { background: var(--green-light); color: var(--green-dark); border-color: #85B7EB; }
+
+  .view-all { color: var(--green-dark); font-size: 12px; text-decoration: none; font-weight: 500; }
+  .view-all:hover { text-decoration: underline; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-label.danger { color: #A32D2D; background: var(--red-light); }
+  .section-label.danger-dot::before {
+    content: ''; display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--red); flex-shrink: 0;
+  }
+
+  /* ── M-Pesa summary cards (inline) ── */
+  .mpesa-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .mpesa-stat-tile {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+  }
+  .mpesa-stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mpesa-stat-val   { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--green-dark); margin-top: 4px; letter-spacing: -0.5px; }
+
+  .mpesa-jump-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 100px;
+    border: 1.5px solid var(--accent);
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .mpesa-jump-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(212,83,126,0.3);
+    transform: translateY(-1px);
+  }
+  .mpesa-jump-btn:active { transform: scale(0.97); }
+
+  @keyframes autofill-flash {
+    0%   { background: #DDEEFF; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(91,155,213,0.25); }
+    100% { background: var(--surface); border-color: var(--border-strong); box-shadow: none; }
+  }
+  .autofill-pulse { animation: autofill-flash 0.6s ease-out forwards; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+
+  @media (max-width: 900px) {
+    .pos-main, .bottom-row { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .checkout-panel { position: static; }
+  }
+</style>
+
+<div class="pos-wrap">
+
+  <!-- Header -->
+  <div class="pos-header">
+    <div class="pos-brand">
+      <span class="pos-brand-name">eLSHADAI SUPER MARKET</span>
+      <span class="pos-brand-sub">POINT OF SALE · SALES DASHBOARD</span>
+    </div>
+    <div class="pos-header-actions">
+      <span class="header-pill active">● OPEN</span>
+      <span class="header-pill">Scan · Pay · Print</span>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stat-row">
+    <div class="stat-tile">
+      <div class="stat-tile-icon green">&#9632;</div>
+      <div class="stat-tile-value">{{ total_products }}</div>
+      <div class="stat-tile-label">Products</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-icon blue">&#9632;</div>
+      <div class="stat-tile-value">KES {{ total_sales_value|floatformat:0 }}</div>
+      <div class="stat-tile-label">Total Revenue</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-icon amber">&#9632;</div>
+      <div class="stat-tile-value">KES {{ inventory_value|floatformat:0 }}</div>
+      <div class="stat-tile-label">Inventory Value</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-icon {% if low_stock > 0 %}red{% else %}green{% endif %}">&#9632;</div>
+      <div class="stat-tile-value {% if low_stock > 0 %}danger{% endif %}">{{ low_stock }}</div>
+      <div class="stat-tile-label">Low Stock</div>
+    </div>
+  </div>
+
+  <!-- Main POS Grid -->
+  <div class="pos-main">
+
+    <!-- LEFT: Scanner + Cart -->
+    <div>
+
+      <!-- Scanner -->
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="card-header">
+          <span class="card-title">
+            <span class="card-title-icon">&#9643;</span>
+            Scan Barcode / Search Product
+          </span>
+        </div>
+        <div class="scan-row">
+          <input type="text" id="barcodeInput" class="scan-input"
+                 placeholder="Scan barcode or type product name / SKU..."
+                 autofocus autocomplete="off">
+          <button onclick="lookupBarcode()" class="scan-btn" title="Search">
+            &#128269;
+          </button>
+        </div>
+        <div id="scanResult"></div>
+        <div id="suggestions"></div>
+      </div>
+
+      <!-- Cart -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <span class="card-title-icon">&#128722;</span>
+            Cart
+          </span>
+          <button onclick="clearCart()" class="clear-btn">Clear Cart</button>
+        </div>
+        <table class="cart-table" id="cartTable">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Unit Price</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cartBody">
+            <tr id="emptyRow">
+              <td colspan="5">
+                <div class="empty-cart">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                  Cart is empty — scan a barcode or search a product
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT: Checkout -->
+    <div class="checkout-panel">
+
+      <!-- Bill Summary -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <span class="card-title-icon">&#128179;</span>
+            Payment &amp; Checkout
+          </span>
+          <button onclick="scrollToMpesa()" class="mpesa-jump-btn">
+            &#128241; Pay via M-Pesa &#8595;
+          </button>
+        </div>
+        <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+
+          <div class="bill-summary">
+            <div class="bill-row">
+              <span class="label">Subtotal</span>
+              <span class="value" id="subtotalDisplay">KES 0.00</span>
+            </div>
+            <div class="bill-row">
+              <span class="label">VAT (<span id="taxRateLabel">16</span>%)</span>
+              <span class="value" id="taxDisplay">KES 0.00</span>
+            </div>
+            <div class="bill-divider"></div>
+            <div class="bill-total-row">
+              <span class="bill-total-label">Total</span>
+              <span class="bill-total-value" id="totalDisplay">KES 0.00</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field-group">
+              <label class="field-label">Cashier Name</label>
+              <input type="text" id="cashierName" class="field-input" placeholder="Enter name...">
+            </div>
+            <div class="field-group">
+              <label class="field-label">VAT %</label>
+              <input type="number" id="taxRate" class="field-input mono" value="0" min="0" max="100" oninput="updateTotals()">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Amount Paid (KES)</label>
+            <input type="number" id="amountPaid" class="field-input large mono"
+                   placeholder="0.00" step="0.01" min="0"
+                   oninput="updateChange()">
+          </div>
+
+          <div class="quick-cash">
+            <button onclick="setQuickCash(100)"  class="qc-btn">100</button>
+            <button onclick="setQuickCash(200)"  class="qc-btn">200</button>
+            <button onclick="setQuickCash(500)"  class="qc-btn">500</button>
+            <button onclick="setQuickCash(1000)" class="qc-btn">1000</button>
+            <button onclick="setExactCash()"     class="qc-btn" style="font-family:var(--sans);">Exact</button>
+          </div>
+
+          <div class="change-row">
+            <span class="change-label">Change Due</span>
+            <span class="change-value" id="changeDisplay">KES 0.00</span>
+          </div>
+
+          <form method="post" id="saleForm" action="/">
+            {% csrf_token %}
+            <input type="hidden" name="cart_data"   id="cartDataInput">
+            <input type="hidden" name="cashier"     id="cashierInput">
+            <input type="hidden" name="amount_paid" id="amountPaidInput">
+            <input type="hidden" name="tax_rate"    id="taxRateInput">
+            <button type="button" onclick="submitSale()" class="submit-btn">
+              &#10003; &nbsp;Complete Sale &amp; Print Receipt
+            </button>
+          </form>
+
+          <div class="kbd-hint">
+            <span><span class="kbd">Enter</span> Scan</span>
+            <span><span class="kbd">Esc</span> Clear</span>
+            <span>Receipt prints automatically</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- M-Pesa -->
+      <div class="mpesa-wrap" id="mpesa-panel">
+        <div class="mpesa-hd">
+          <div class="mpesa-hd-icon">&#128241;</div>
+          <div>
+            <div class="mpesa-hd-title">M-Pesa Payment</div>
+            <div class="mpesa-hd-sub">ELSHADAI SUPERMARKET · STK PUSH</div>
+          </div>
+        </div>
+        <div class="mpesa-body">
+          <div class="field-group">
+            <label class="field-label">Customer phone number</label>
+            <input type="tel" id="mpesa-phone" class="field-input mono" placeholder="07XXXXXXXX or 2547XXXXXXXX">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Amount (KES) <span id="mpesa-auto-tag" style="display:none;margin-left:6px;padding:2px 8px;border-radius:100px;background:var(--green-light);color:var(--green-dark);font-size:10px;font-weight:600;border:1px solid #85B7EB;letter-spacing:0.04em;">AUTO</span></label>
+            <input type="number" id="mpesa-amount" name="amount" class="field-input mono" placeholder="e.g. 500" min="1">
+          </div>
+          <button class="mpesa-send-btn" id="mpesa-btn" onclick="mpesaSend()">
+            <span id="mpesa-btn-icon">&#8594;</span>
+            <span id="mpesa-btn-text">Send M-Pesa prompt</span>
+          </button>
+          <div class="mpesa-status" id="mpesa-status">
+            <div class="mpesa-status-row">
+              <div class="mpesa-sicon pending" id="mpesa-sicon">
+                <span class="mdots"><span>&#183;</span><span>&#183;</span><span>&#183;</span></span>
+              </div>
+              <div>
+                <div class="mpesa-stext" id="mpesa-stext">Sending...</div>
+                <div class="mpesa-ssub" id="mpesa-ssub"></div>
+              </div>
+            </div>
+            <div class="mpesa-timer" id="mpesa-timer"></div>
+          </div>
+          <div class="mpesa-receipt" id="mpesa-receipt">
+            <div class="mpesa-rrow"><span class="mpesa-rl">M-Pesa code</span><span class="mpesa-rv green" id="r-code">—</span></div>
+            <div class="mpesa-rrow"><span class="mpesa-rl">Phone</span><span class="mpesa-rv" id="r-phone">—</span></div>
+            <div class="mpesa-rrow"><span class="mpesa-rl">Amount</span><span class="mpesa-rv" id="r-amount">—</span></div>
+            <div class="mpesa-rrow"><span class="mpesa-rl">Status</span><span class="mpesa-rv green">&#10003; Confirmed</span></div>
+          </div>
+          <button class="mpesa-reset" id="mpesa-reset" onclick="mpesaReset()">&#8592; New payment</button>
+
+          <div class="mpesa-stats">
+            <div class="mpesa-stat-tile">
+              <div class="mpesa-stat-label">Collections</div>
+              <div class="mpesa-stat-val">KES {{ total_mpesa }}</div>
+            </div>
+            <div class="mpesa-stat-tile">
+              <div class="mpesa-stat-label">Transactions</div>
+              <div class="mpesa-stat-val">{{ total_mpesa_transactions }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Row: Receipts + Low Stock -->
+  <div class="bottom-row">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <span class="card-title-icon">&#128203;</span>
+          Recent Receipts
+        </span>
+        <a href="{% url 'receipt_list' %}" class="view-all">View all &#8594;</a>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Receipt #</th>
+            <th>Cashier</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for receipt in recent_receipts %}
+          <tr>
+            <td class="mono-cell">{{ receipt.receipt_number }}</td>
+            <td>{{ receipt.cashier|default:"—" }}</td>
+            <td class="green-cell">KES {{ receipt.grand_total }}</td>
+            <td class="muted-cell">{{ receipt.created_at|date:"M d, H:i" }}</td>
+            <td>
+              <a href="{% url 'receipt_detail' receipt.pk %}" class="print-btn" title="Print">
+                &#128424;
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row"><td colspan="5">No receipts yet — complete a sale above.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-label danger danger-dot">Low Stock Alert</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Product</th><th>Stock</th></tr>
+        </thead>
+        <tbody>
+          {% for product in low_stock_products %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td><span class="badge-low">{{ product.stock_quantity }} left</span></td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row"><td colspan="2">All products well stocked &#10003;</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  {% if latest_receipt %}
+  <div style="margin-top: 24px;">
+    <div class="card" style="max-width: 340px;">
+      <div class="card-header">
+        <span class="card-title">Latest Receipt #{{ latest_receipt.receipt_number }}</span>
+      </div>
+      <div style="padding: 16px 18px; display: flex; align-items: center; gap: 16px;">
+        <img src="data:image/png;base64,{{ promptpay_qr }}" alt="PromptPay QR" style="width: 90px; height: 90px; border-radius: 8px; border: 1px solid var(--border);">
+        <div>
+          <div style="font-size: 12px; color: var(--muted);">Amount</div>
+          <div style="font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--green-dark);">{{ latest_receipt.amount_paid }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+<!-- Payment Result Popup -->
+<div id="pay-popup-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(22,34,53,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div id="pay-popup" style="background:#fff;border-radius:20px;padding:0;width:340px;max-width:92vw;overflow:hidden;transform:scale(0.85);opacity:0;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.25s ease;">
+
+    <!-- Top band (changes colour) -->
+    <div id="pay-popup-band" style="padding:32px 28px 24px;text-align:center;background:var(--green-light);">
+      <div id="pay-popup-icon" style="width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#fff;"></div>
+      <div id="pay-popup-title" style="font-family:var(--serif);font-size:20px;font-weight:500;color:var(--text);margin-bottom:6px;"></div>
+      <div id="pay-popup-sub" style="font-size:13px;color:var(--muted);"></div>
+    </div>
+
+    <!-- Detail rows -->
+    <div style="padding:18px 24px 0;">
+      <div id="pay-popup-rows" style="display:flex;flex-direction:column;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);"></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="padding:18px 24px 24px;display:flex;gap:10px;">
+      <button id="pay-popup-close" onclick="closePayPopup()" style="flex:1;height:44px;border-radius:10px;border:1.5px solid var(--border-strong);background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:background 0.15s;">
+        Close
+      </button>
+      <button id="pay-popup-action" style="flex:1;height:44px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity 0.15s;display:none;">
+      </button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /pos-wrap -->
+
+<style>
+#pay-popup-overlay { display: none; }
+#pay-popup-overlay.open { display: flex !important; }
+#pay-popup-overlay.open #pay-popup { transform: scale(1); opacity: 1; }
+
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.popup-row:last-child { border-bottom: none; }
+.popup-row-label { color: var(--muted); }
+.popup-row-val { font-family: var(--mono); font-weight: 500; color: var(--text); }
+.popup-row-val.green { color: var(--green-dark); }
+.popup-row-val.red   { color: var(--red); }
+</style>
+<script>
+(function(){
+  let pollT=null,cntT=null,secs=60;
+  function csrf(){let v='';document.cookie.split(';').forEach(c=>{const t=c.trim();if(t.startsWith('csrftoken='))v=decodeURIComponent(t.slice(10))});return v}
+  function setS(type,text,sub){
+    const b=document.getElementById('mpesa-status'),ic=document.getElementById('mpesa-sicon');
+    b.className='mpesa-status '+type;b.style.display='block';
+    document.getElementById('mpesa-stext').textContent=text;
+    document.getElementById('mpesa-ssub').textContent=sub||'';
+    ic.className='mpesa-sicon '+type;
+    if(type==='pending')ic.innerHTML='<span class="mdots"><span>&#183;</span><span>&#183;</span><span>&#183;</span></span>';
+    else if(type==='success')ic.textContent='✓';
+    else ic.textContent='✕';
+  }
+  function tick(){secs--;const t=document.getElementById('mpesa-timer');if(secs>0)t.textContent='Waiting for PIN... '+secs+'s';else{t.textContent='';clearInterval(cntT);}}
+  function resetBtn(){const b=document.getElementById('mpesa-btn');b.disabled=false;document.getElementById('mpesa-btn-text').textContent='Send M-Pesa prompt';document.getElementById('mpesa-btn-icon').textContent='→';}
+  window.mpesaSend=function(){
+    const ph=document.getElementById('mpesa-phone').value.trim();
+    const am=document.getElementById('mpesa-amount').value.trim();
+    if(!ph||!am){setS('pending','Please enter phone and amount.');return}
+    const b=document.getElementById('mpesa-btn');
+    b.disabled=true;document.getElementById('mpesa-btn-text').textContent='Sending...';document.getElementById('mpesa-btn-icon').textContent='';
+    document.getElementById('mpesa-receipt').style.display='none';document.getElementById('mpesa-reset').style.display='none';
+    setS('pending','Sending prompt to '+ph+'...','Please wait');
+    const fd=new FormData();fd.append('phone_number',ph);fd.append('amount',am);fd.append('csrfmiddlewaretoken',csrf());
+    fetch('/mpesa/pay/',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+      if(d.success){
+        setS('pending','Waiting for customer PIN','Ask customer to check their phone');
+        document.getElementById('mpesa-btn-text').textContent='Awaiting payment...';
+        secs=60;document.getElementById('mpesa-timer').textContent='Waiting... 60s';
+        cntT=setInterval(tick,1000);
+        poll(d.checkout_request_id,ph,am);
+      }else{setS('failed',d.error||'Failed');resetBtn();document.getElementById('mpesa-reset').style.display='block';}
+    }).catch(()=>{setS('failed','Network error.');resetBtn();document.getElementById('mpesa-reset').style.display='block';});
+  };
+  function poll(id,ph,am){
+    let n=0;if(pollT)clearInterval(pollT);
+    pollT=setInterval(()=>{
+      n++;
+      fetch('/mpesa/status/?checkout_request_id='+encodeURIComponent(id)).then(r=>r.json()).then(d=>{
+        if(d.status==='success'){
+          clearInterval(pollT);clearInterval(cntT);document.getElementById('mpesa-timer').textContent='';
+          setS('success','Payment confirmed!','Transaction complete');
+          document.getElementById('r-code').textContent=d.mpesa_code||'—';
+          document.getElementById('r-phone').textContent=d.phone||ph;
+          document.getElementById('r-amount').textContent='KES '+(d.amount||am);
+          document.getElementById('mpesa-receipt').style.display='block';
+          document.getElementById('mpesa-btn').style.display='none';
+          document.getElementById('mpesa-reset').style.display='block';
+          showPayPopup('success', {
+            code: d.mpesa_code||'—',
+            phone: d.phone||ph,
+            amount: 'KES '+(d.amount||am)
+          });
+          setTimeout(()=>location.reload(),4500);
+        }else if(d.status==='failed'||n>=20){
+          clearInterval(pollT);clearInterval(cntT);document.getElementById('mpesa-timer').textContent='';
+          const reason = n>=20 ? 'Payment timed out' : 'Cancelled by customer';
+          setS('failed', reason+'.','');
+          resetBtn();document.getElementById('mpesa-reset').style.display='block';
+          showPayPopup('failed', { reason: reason, phone: ph, amount: 'KES '+am });
+        }
+      }).catch(()=>{});
+    },3000);
+  }
+  window.mpesaReset=function(){
+    clearInterval(pollT);clearInterval(cntT);
+    document.getElementById('mpesa-status').style.display='none';
+    document.getElementById('mpesa-receipt').style.display='none';
+    document.getElementById('mpesa-reset').style.display='none';
+    document.getElementById('mpesa-btn').style.display='flex';
+    document.getElementById('mpesa-phone').value='';document.getElementById('mpesa-amount').value='';
+    resetBtn();
+  };
+})();
+
+// ── Payment Result Popup ──
+function showPayPopup(type, data) {
+  const overlay = document.getElementById('pay-popup-overlay');
+  const band    = document.getElementById('pay-popup-band');
+  const icon    = document.getElementById('pay-popup-icon');
+  const title   = document.getElementById('pay-popup-title');
+  const sub     = document.getElementById('pay-popup-sub');
+  const rows    = document.getElementById('pay-popup-rows');
+  const action  = document.getElementById('pay-popup-action');
+
+  if (type === 'success') {
+    band.style.background  = '#E1F5EE';
+    icon.style.background  = '#9FE1CB';
+    icon.style.color       = '#085041';
+    icon.textContent       = '✓';
+    title.textContent      = 'Payment Received!';
+    sub.textContent        = 'M-Pesa transaction confirmed';
+    rows.innerHTML = `
+      <div class="popup-row"><span class="popup-row-label">M-Pesa Code</span><span class="popup-row-val green">${data.code}</span></div>
+      <div class="popup-row"><span class="popup-row-label">Phone</span><span class="popup-row-val">${data.phone}</span></div>
+      <div class="popup-row"><span class="popup-row-label">Amount</span><span class="popup-row-val green">${data.amount}</span></div>
+      <div class="popup-row"><span class="popup-row-label">Status</span><span class="popup-row-val green">✓ Confirmed</span></div>
+    `;
+    action.textContent  = 'Print Receipt';
+    action.style.background = '#1D9E75';
+    action.style.display = 'block';
+    action.onclick = () => { closePayPopup(); submitSale(); };
+  } else {
+    band.style.background  = '#FCEBEB';
+    icon.style.background  = '#f7c1c1';
+    icon.style.color       = '#A32D2D';
+    icon.textContent       = '✕';
+    title.textContent      = 'Payment Failed';
+    sub.textContent        = data.reason || 'Transaction was not completed';
+    rows.innerHTML = `
+      <div class="popup-row"><span class="popup-row-label">Phone</span><span class="popup-row-val">${data.phone}</span></div>
+      <div class="popup-row"><span class="popup-row-label">Amount</span><span class="popup-row-val">${data.amount}</span></div>
+      <div class="popup-row"><span class="popup-row-label">Status</span><span class="popup-row-val red">✕ ${data.reason}</span></div>
+    `;
+    action.textContent  = 'Retry Payment';
+    action.style.background = 'var(--accent)';
+    action.style.display = 'block';
+    action.onclick = () => { closePayPopup(); document.getElementById('mpesa-btn') && (document.getElementById('mpesa-btn').style.display='flex'); scrollToMpesa(); };
+  }
+
+  overlay.classList.add('open');
+}
+
+function closePayPopup() {
+  const overlay = document.getElementById('pay-popup-overlay');
+  const popup   = document.getElementById('pay-popup');
+  popup.style.transform = 'scale(0.85)';
+  popup.style.opacity   = '0';
+  setTimeout(() => { overlay.classList.remove('open'); popup.style.transform=''; popup.style.opacity=''; }, 280);
+}
+
+// Close on overlay click
+document.getElementById('pay-popup-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closePayPopup();
+});
+</script>
+
+<!-- POS logic -->
+<script>
+const ALL_PRODUCTS = [
+    {% for p in all_products %}
+    { id: {{ p.pk }}, name: "{{ p.name|escapejs }}", sku: "{{ p.sku|escapejs }}", barcode: "{{ p.barcode_number|escapejs }}", price: {{ p.price }}, stock: {{ p.stock_quantity }} },
+    {% endfor %}
+];
+
+let cart = [];
+
+const barcodeInput = document.getElementById('barcodeInput');
+const scanResult   = document.getElementById('scanResult');
+const cartBody     = document.getElementById('cartBody');
+const emptyRow     = document.getElementById('emptyRow');
+const suggestions  = document.getElementById('suggestions');
+
+barcodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); lookupBarcode(); hideSuggestions(); }
+    if (e.key === 'Escape') { barcodeInput.value = ''; scanResult.innerHTML = ''; hideSuggestions(); }
+});
+
+barcodeInput.addEventListener('input', () => {
+    const q = barcodeInput.value.trim().toLowerCase();
+    if (q.length < 1) { hideSuggestions(); return; }
+    const matches = ALL_PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.barcode.toLowerCase().includes(q)
+    ).slice(0, 8);
+    if (!matches.length) { hideSuggestions(); return; }
+    suggestions.innerHTML = matches.map(p => `
+        <div class="suggest-item" onclick="pickProduct(${p.id})">
+            <div>
+                <div class="suggest-name">${p.name}</div>
+                <div class="suggest-sku">${p.sku}</div>
+            </div>
+            <div>
+                <div class="suggest-price">KES ${p.price.toFixed(2)}</div>
+                <div class="suggest-stock">${p.stock} in stock</div>
+            </div>
+        </div>
+    `).join('');
+    suggestions.style.display = 'block';
+});
+
+function hideSuggestions() { suggestions.style.display = 'none'; }
+document.addEventListener('click', e => { if (!e.target.closest('#barcodeInput,#suggestions')) hideSuggestions(); });
+
+function pickProduct(id) {
+    const p = ALL_PRODUCTS.find(x => x.id === id);
+    if (p) { addToCart(p); scanResult.innerHTML = `<span class="ok">&#10003; Added: <strong>${p.name}</strong></span>`; }
+    barcodeInput.value = '';
+    hideSuggestions();
+    barcodeInput.focus();
+}
+
+async function lookupBarcode() {
+    const code = barcodeInput.value.trim();
+    if (!code) return;
+    const local = ALL_PRODUCTS.find(p => p.sku === code || p.barcode === code);
+    if (local) { addToCart(local); scanResult.innerHTML = `<span class="ok">&#10003; Added: <strong>${local.name}</strong></span>`; barcodeInput.value=''; barcodeInput.focus(); return; }
+    scanResult.innerHTML = '<span style="color:var(--muted)">Searching...</span>';
+    try {
+        const res  = await fetch(`/barcode/lookup/?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
+        if (data.found) {
+            addToCart(data);
+            scanResult.innerHTML = `<span class="ok">&#10003; Added: <strong>${data.name}</strong> — KES ${data.price}</span>`;
+        } else {
+            scanResult.innerHTML = `<span class="err">&#10007; ${data.error}</span>`;
+        }
+    } catch { scanResult.innerHTML = `<span class="err">&#10007; Network error.</span>`; }
+    barcodeInput.value = '';
+    barcodeInput.focus();
+}
+
+function addToCart(product) {
+    const id = product.id || product.product_id;
+    const existing = cart.find(i => i.product_id === id);
+    if (existing) {
+        if (existing.quantity < existing.stock) existing.quantity++;
+        else { scanResult.innerHTML = `<span class="err">&#9888; Max stock reached for ${existing.name}</span>`; return; }
+    } else {
+        cart.push({ product_id: id, name: product.name, sku: product.sku || '', price: parseFloat(product.price), quantity: 1, stock: product.stock });
+    }
+    renderCart();
+}
+
+function changeQty(productId, delta) {
+    const item = cart.find(i => i.product_id === productId);
+    if (!item) return;
+    item.quantity = Math.max(0, Math.min(item.quantity + delta, item.stock));
+    if (item.quantity === 0) cart = cart.filter(i => i.product_id !== productId);
+    renderCart();
+}
+
+function removeFromCart(productId) { cart = cart.filter(i => i.product_id !== productId); renderCart(); }
+function clearCart() { cart = []; renderCart(); scanResult.innerHTML = ''; }
+
+function getTaxRate()  { return parseFloat(document.getElementById('taxRate').value) || 0; }
+function getSubtotal() { return cart.reduce((s, i) => s + i.price * i.quantity, 0); }
+function getGrandTotal(){ const s = getSubtotal(); return s + s * (getTaxRate()/100); }
+
+function updateTotals() {
+    const sub   = getSubtotal();
+    const tax   = sub * (getTaxRate() / 100);
+    const grand = sub + tax;
+    document.getElementById('subtotalDisplay').textContent = `KES ${sub.toFixed(2)}`;
+    document.getElementById('taxDisplay').textContent      = `KES ${tax.toFixed(2)}`;
+    document.getElementById('totalDisplay').textContent    = `KES ${grand.toFixed(2)}`;
+    document.getElementById('taxRateLabel').textContent    = getTaxRate();
+    updateChange();
+}
+
+function updateChange() {
+    const grand = getGrandTotal();
+    const paid  = parseFloat(document.getElementById('amountPaid').value) || 0;
+    const change= Math.max(0, paid - grand);
+    const el    = document.getElementById('changeDisplay');
+    el.textContent = `KES ${change.toFixed(2)}`;
+    el.className   = 'change-value' + (paid >= grand && paid > 0 ? ' exact' : '');
+
+    // Sync M-Pesa amount field to grand total
+    const mpesaAmt = document.getElementById('mpesa-amount');
+    const autoTag  = document.getElementById('mpesa-auto-tag');
+    if (mpesaAmt && grand > 0) {
+        const prev = mpesaAmt.value;
+        mpesaAmt.value = grand.toFixed(2);
+        if (autoTag) autoTag.style.display = 'inline';
+        // Flash the field to signal it updated
+        if (prev !== mpesaAmt.value) {
+            mpesaAmt.classList.remove('autofill-pulse');
+            void mpesaAmt.offsetWidth; // force reflow to restart animation
+            mpesaAmt.classList.add('autofill-pulse');
+        }
+    } else if (mpesaAmt && grand === 0) {
+        mpesaAmt.value = '';
+        if (autoTag) autoTag.style.display = 'none';
+        mpesaAmt.classList.remove('autofill-pulse');
+    }
+}
+
+function setQuickCash(amount) { document.getElementById('amountPaid').value = amount; updateChange(); }
+function setExactCash()       { document.getElementById('amountPaid').value = getGrandTotal().toFixed(2); updateChange(); }
+
+function renderCart() {
+    cartBody.querySelectorAll('.cart-row').forEach(r => r.remove());
+    emptyRow.style.display = cart.length === 0 ? '' : 'none';
+    cart.forEach(item => {
+        const sub = item.price * item.quantity;
+        const tr  = document.createElement('tr');
+        tr.className = 'cart-row';
+        tr.innerHTML = `
+            <td>
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-sku">${item.sku}</div>
+            </td>
+            <td class="mono-cell">KES ${item.price.toFixed(2)}</td>
+            <td>
+                <div class="qty-ctrl">
+                    <button class="qty-btn" onclick="changeQty(${item.product_id},-1)">&#8722;</button>
+                    <span class="qty-num">${item.quantity}</span>
+                    <button class="qty-btn" onclick="changeQty(${item.product_id},1)">&#43;</button>
+                </div>
+            </td>
+            <td class="green-cell">KES ${sub.toFixed(2)}</td>
+            <td><button class="remove-btn" onclick="removeFromCart(${item.product_id})">&#10005;</button></td>
+        `;
+        cartBody.appendChild(tr);
+    });
+    updateTotals();
+}
+
+function submitSale() {
+    if (cart.length === 0) { alert('Cart is empty. Add items first.'); barcodeInput.focus(); return; }
+    const paid  = parseFloat(document.getElementById('amountPaid').value) || 0;
+    const grand = getGrandTotal();
+    if (paid > 0 && paid < grand) {
+        if (!confirm(`Amount paid (KES ${paid.toFixed(2)}) is less than total (KES ${grand.toFixed(2)}). Continue?`)) return;
+    }
+    document.getElementById('cartDataInput').value   = JSON.stringify(cart);
+    document.getElementById('cashierInput').value    = document.getElementById('cashierName').value;
+    document.getElementById('amountPaidInput').value = paid;
+    document.getElementById('taxRateInput').value    = getTaxRate();
+    document.getElementById('saleForm').submit();
+}
+
+window.addEventListener('load', () => barcodeInput.focus());
+document.addEventListener('click', e => { if (!e.target.closest('input,button,select,a,#suggestions')) barcodeInput.focus(); });
+
+function scrollToMpesa() {
+    const panel = document.getElementById('mpesa-panel');
+    if (!panel) return;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Highlight the phone input after scroll
+    setTimeout(() => {
+        const phone = document.getElementById('mpesa-phone');
+        if (phone) {
+            phone.focus();
+            panel.style.transition = 'box-shadow 0.3s';
+            panel.style.boxShadow = '0 0 0 3px rgba(212,83,126,0.35)';
+            setTimeout(() => { panel.style.boxShadow = ''; }, 1200);
+        }
+    }, 400);
+}
+</script>
+
+{% endblock %}

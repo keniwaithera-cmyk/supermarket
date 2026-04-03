@@ -1,0 +1,26 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">Confirm Delete</h2>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="data-card">
+            <div class="p-4">
+                <div style="font-size:3rem;text-align:center;margin-bottom:16px;">⚠️</div>
+                <h5 style="text-align:center;margin-bottom:8px;">Delete {{ type }}?</h5>
+                <p style="color:var(--muted);text-align:center;margin-bottom:24px;">
+                    Are you sure you want to delete <strong style="color:var(--text);">{{ object }}</strong>? This action cannot be undone.
+                </p>
+                <form method="post" class="d-flex gap-2 justify-content-center">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4">Yes, Delete</button>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary px-4">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

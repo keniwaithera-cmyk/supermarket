@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperMarket Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+        :root {
+            --green: #00c851;
+            --dark: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: blueviolet;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            top: 0; left: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-brand h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--green);
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-brand span { color: var(--text); }
+
+        .nav-section {
+            padding: 16px 12px 8px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: deeppink;
+            font-weight: 600;
+        }
+
+        .sidebar .nav-link {
+            color: darkred;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin: 2px 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: var(--text);
+            background: rgba(0, 200, 81, 0.1);
+        }
+
+        .sidebar .nav-link.active { color: var(--green); }
+        .sidebar .nav-link i { width: 18px; text-align: center; }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 32px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1.6rem;
+            margin: 0;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .stat-card:hover { border-color: var(--green); }
+
+        .stat-icon {
+            width: 44px; height: 44px;
+            background: rgba(0,200,81,0.12);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: blueviolet;
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+        }
+
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-label { color: var(--muted); font-size: 0.85rem; }
+
+        .data-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .data-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+        }
+
+        .table { color: var(--text); margin: 0; }
+        .table th { color: mintcream; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; border-color: var(--border); font-weight: 500; padding: 12px 20px; }
+        .table td { border-color: var(--border); padding: 12px 20px; vertical-align: middle; }
+        .table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+        .badge-low { background: rgba(255,80,80,0.15); color: #ff5050; font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; }
+        .badge-ok { background: rgba(0,200,81,0.15); color: var(--green); font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; }
+
+        .btn-primary { background: var(--green); border-color: var(--green); color: #000; font-weight: 600; }
+        .btn-primary:hover { background: #00a844; border-color: #00a844; color: #000; }
+        .btn-outline-secondary { border-color: var(--border); color: var(--muted); }
+        .btn-outline-secondary:hover { background: var(--border); color: var(--text); }
+
+        .form-control, .form-select {
+            background: var(--dark);
+            border-color: var(--border);
+            color: var(--text);
+            border-radius: 8px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: greenyellow;
+            border-color: var(--green);
+            color: var(--text);
+            box-shadow: 0 0 0 3px rgba(0,200,81,0.15);
+        }
+
+        .alert { border-radius: 10px; border: none; }
+        .alert-success { background: rgba(0,200,81,0.12); color: var(--green); }
+        .alert-danger { background: rgba(255,80,80,0.12); color: #ff5050; }
+
+        .action-btn { width: 32px; height: 32px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.15s; font-size: 0.8rem; }
+        .action-btn:hover { background: var(--border); color: var(--text); }
+        .action-btn.danger:hover { background: rgba(255,80,80,0.15); border-color: #ff5050; color: #ff5050; }
+
+        label { color: var(--muted); font-size: 0.85rem; margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+<h1>Elshadai super market</h1>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <h1>🛒 <span> ElshadaiSuper</span>Market</h1>
+        <div style="color:var(--muted);font-size:0.75rem;margin-top:4px;">Management System</div>
+    </div>
+    <nav class="py-2 flex-grow-1">
+        <div class="nav-section">Overview</div>
+        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i> Dashboard
+        </a>
+        <div class="nav-section">Inventory</div>
+        <a href="{% url 'product_list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-box"></i> Products
+        </a>
+        <a href="{% url 'category_list' %}" class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-tags"></i> Categories
+        </a>
+        <a href="{% url 'supplier_list' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-truck"></i> Suppliers
+        </a>
+        <div class="nav-section">Transactions</div>
+        <a href="{% url 'pos_sale' %}" class="nav-link {% if request.resolver_match.url_name == 'pos_sale' %}active{% endif %}">
+            <i class="fas fa-barcode"></i> POS / Scan Sale
+        </a>
+        <a href="{% url 'sale_list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name and request.resolver_match.url_name != 'pos_sale' %}active{% endif %}">
+            <i class="fas fa-receipt"></i> Sales History
+        </a>
+        <div class="nav-section">System</div>
+        <a href="/admin/" class="nav-link">
+            <i class="fas fa-cog"></i> Admin Panel
+        </a>
+    </nav>
+</div>
+
+<div class="main-content">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

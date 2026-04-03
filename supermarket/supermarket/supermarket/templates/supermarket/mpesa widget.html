@@ -1,0 +1,156 @@
+{% comment %}
+Drop this anywhere in your dashboard.html or pos_sale.html
+{% endcomment %}
+
+<style>
+.mpesa-card{background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:12px;overflow:hidden;max-width:460px;font-family:inherit}
+.mpesa-header{background:#1a9e72;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:12px}
+.mpesa-logo{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px}
+.mpesa-title{color:#fff;font-size:15px;font-weight:600}
+.mpesa-sub{color:rgba(255,255,255,0.8);font-size:12px;margin-top:2px}
+.mpesa-body{padding:1.25rem 1.5rem}
+.mpesa-field{margin-bottom:1rem}
+.mpesa-field label{font-size:12px;color:#666;display:block;margin-bottom:6px;font-weight:500}
+.mpesa-field input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border 0.15s;background:#fafafa;box-sizing:border-box}
+.mpesa-field input:focus{border-color:#1a9e72;background:#fff}
+.mpesa-send-btn{width:100%;padding:12px;background:#1a9e72;color:#fff;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.mpesa-send-btn:disabled{opacity:0.6;cursor:not-allowed}
+.mpesa-send-btn:hover:not(:disabled){opacity:0.9}
+.mpesa-status{margin-top:1rem;padding:1rem;border-radius:8px;display:none;border:1px solid #eee}
+.mpesa-status.pending{background:#f8f9fa}
+.mpesa-status.success{background:#e1f5ee;border-color:#5dcaa5}
+.mpesa-status.failed{background:#fff0f0;border-color:#f09595}
+.mpesa-status-row{display:flex;align-items:center;gap:10px}
+.mpesa-sicon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700}
+.mpesa-sicon.pending{background:#e9ecef;color:#666}
+.mpesa-sicon.success{background:#9fe1cb;color:#0f6e56}
+.mpesa-sicon.failed{background:#f7c1c1;color:#a32d2d}
+.mpesa-stext{font-size:13px;font-weight:600;color:#222}
+.mpesa-ssub{font-size:12px;color:#888;margin-top:2px}
+.mpesa-timer{font-size:11px;color:#999;text-align:center;margin-top:8px}
+.mpesa-receipt{margin-top:1rem;padding:1rem;background:#f8f9fa;border-radius:8px;border:1px solid #eee;display:none}
+.mpesa-rrow{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #f0f0f0}
+.mpesa-rrow:last-child{border-bottom:none}
+.mpesa-rl{color:#888}
+.mpesa-rv{font-weight:600;color:#222}
+.mpesa-rv.green{color:#0f6e56}
+.mpesa-reset{width:100%;padding:10px;background:transparent;border:1px solid #ddd;border-radius:8px;color:#444;font-size:13px;cursor:pointer;margin-top:10px;display:none}
+.mpesa-reset:hover{background:#f5f5f5}
+.mdots span{animation:mpulse 1.2s ease-in-out infinite}
+.mdots span:nth-child(2){animation-delay:0.2s}
+.mdots span:nth-child(3){animation-delay:0.4s}
+@keyframes mpulse{0%,100%{opacity:1}50%{opacity:0.3}}
+</style>
+
+<div class="mpesa-card">
+  <div class="mpesa-header">
+    <div class="mpesa-logo">📱</div>
+    <div>
+      <div class="mpesa-title">M-Pesa Payment</div>
+      <div class="mpesa-sub">Elshadai Supermarket</div>
+    </div>
+  </div>
+  <div class="mpesa-body">
+    <div class="mpesa-field">
+      <label>Customer phone number</label>
+      <input type="tel" id="mpesa-phone" placeholder="07XXXXXXXX or 2547XXXXXXXX">
+    </div>
+    <div class="mpesa-field">
+      <label>Amount (KES)</label>
+      <input type="number" id="mpesa-amount" placeholder="e.g. 500" min="1">
+    </div>
+    <button class="mpesa-send-btn" id="mpesa-btn" onclick="mpesaSend()">
+      <span id="mpesa-btn-icon">&#8594;</span>
+      <span id="mpesa-btn-text">Send M-Pesa prompt</span>
+    </button>
+    <div class="mpesa-status" id="mpesa-status">
+      <div class="mpesa-status-row">
+        <div class="mpesa-sicon pending" id="mpesa-sicon">
+          <span class="mdots"><span>&#183;</span><span>&#183;</span><span>&#183;</span></span>
+        </div>
+        <div>
+          <div class="mpesa-stext" id="mpesa-stext">Sending...</div>
+          <div class="mpesa-ssub" id="mpesa-ssub"></div>
+        </div>
+      </div>
+      <div class="mpesa-timer" id="mpesa-timer"></div>
+    </div>
+    <div class="mpesa-receipt" id="mpesa-receipt">
+      <div class="mpesa-rrow"><span class="mpesa-rl">M-Pesa code</span><span class="mpesa-rv green" id="r-code">&#8212;</span></div>
+      <div class="mpesa-rrow"><span class="mpesa-rl">Phone</span><span class="mpesa-rv" id="r-phone">&#8212;</span></div>
+      <div class="mpesa-rrow"><span class="mpesa-rl">Amount</span><span class="mpesa-rv" id="r-amount">&#8212;</span></div>
+      <div class="mpesa-rrow"><span class="mpesa-rl">Status</span><span class="mpesa-rv green">&#10003; Confirmed</span></div>
+    </div>
+    <button class="mpesa-reset" id="mpesa-reset" onclick="mpesaReset()">&#8592; New payment</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  let pollT=null,cntT=null,secs=60;
+  function csrf(){let v='';document.cookie.split(';').forEach(c=>{const t=c.trim();if(t.startsWith('csrftoken='))v=decodeURIComponent(t.slice(10))});return v}
+  function setS(type,text,sub){
+    const b=document.getElementById('mpesa-status'),ic=document.getElementById('mpesa-sicon');
+    b.className='mpesa-status '+type;b.style.display='block';
+    document.getElementById('mpesa-stext').textContent=text;
+    document.getElementById('mpesa-ssub').textContent=sub||'';
+    ic.className='mpesa-sicon '+type;
+    if(type==='pending')ic.innerHTML='<span class="mdots"><span>&#183;</span><span>&#183;</span><span>&#183;</span></span>';
+    else if(type==='success')ic.textContent='✓';
+    else ic.textContent='✕';
+  }
+  function tick(){secs--;const t=document.getElementById('mpesa-timer');if(secs>0)t.textContent='Waiting for PIN... '+secs+'s';else{t.textContent='';clearInterval(cntT);}}
+  function resetBtn(){const b=document.getElementById('mpesa-btn');b.disabled=false;document.getElementById('mpesa-btn-text').textContent='Send M-Pesa prompt';document.getElementById('mpesa-btn-icon').textContent='→';}
+  window.mpesaSend=function(){
+    const ph=document.getElementById('mpesa-phone').value.trim();
+    const am=document.getElementById('mpesa-amount').value.trim();
+    if(!ph||!am){setS('pending','Please enter phone and amount.');return}
+    const b=document.getElementById('mpesa-btn');
+    b.disabled=true;document.getElementById('mpesa-btn-text').textContent='Sending...';document.getElementById('mpesa-btn-icon').textContent='';
+    document.getElementById('mpesa-receipt').style.display='none';document.getElementById('mpesa-reset').style.display='none';
+    setS('pending','Sending prompt to '+ph+'...','Please wait');
+    const fd=new FormData();fd.append('phone_number',ph);fd.append('amount',am);fd.append('csrfmiddlewaretoken',csrf());
+    fetch('/mpesa/pay/',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+      if(d.success){
+        setS('pending','Waiting for customer PIN','Ask customer to check their phone');
+        document.getElementById('mpesa-btn-text').textContent='Awaiting payment...';
+        secs=60;document.getElementById('mpesa-timer').textContent='Waiting... 60s';
+        cntT=setInterval(tick,1000);
+        poll(d.checkout_request_id,ph,am);
+      }else{setS('failed',d.error||'Failed');resetBtn();document.getElementById('mpesa-reset').style.display='block';}
+    }).catch(()=>{setS('failed','Network error.');resetBtn();document.getElementById('mpesa-reset').style.display='block';});
+  };
+  function poll(id,ph,am){
+    let n=0;if(pollT)clearInterval(pollT);
+    pollT=setInterval(()=>{
+      n++;
+      fetch('/mpesa/status/?checkout_request_id='+encodeURIComponent(id)).then(r=>r.json()).then(d=>{
+        if(d.status==='success'){
+          clearInterval(pollT);clearInterval(cntT);document.getElementById('mpesa-timer').textContent='';
+          setS('success','Payment confirmed!','Transaction complete');
+          document.getElementById('r-code').textContent=d.mpesa_code||'—';
+          document.getElementById('r-phone').textContent=d.phone||ph;
+          document.getElementById('r-amount').textContent='KES '+(d.amount||am);
+          document.getElementById('mpesa-receipt').style.display='block';
+          document.getElementById('mpesa-btn').style.display='none';
+          document.getElementById('mpesa-reset').style.display='block';
+          setTimeout(()=>location.reload(),3000);
+        }else if(d.status==='failed'||n>=20){
+          clearInterval(pollT);clearInterval(cntT);document.getElementById('mpesa-timer').textContent='';
+          setS('failed',n>=20?'Payment timed out.':'Cancelled by customer.');
+          resetBtn();document.getElementById('mpesa-reset').style.display='block';
+        }
+      }).catch(()=>{});
+    },3000);
+  }
+  window.mpesaReset=function(){
+    clearInterval(pollT);clearInterval(cntT);
+    document.getElementById('mpesa-status').style.display='none';
+    document.getElementById('mpesa-receipt').style.display='none';
+    document.getElementById('mpesa-reset').style.display='none';
+    document.getElementById('mpesa-btn').style.display='flex';
+    document.getElementById('mpesa-phone').value='';document.getElementById('mpesa-amount').value='';
+    resetBtn();
+  };
+})();
+</script>

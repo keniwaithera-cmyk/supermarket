@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Receipt</title>
+    <style>
+        body { font-family: monospace; font-size: 12px; }
+        .receipt { width: 280px; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        img.qr { width: 120px; height: 120px; margin: 10px auto; display: block; }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="receipt">
+        <div class="center bold">Supermarket POS</div>
+        <hr>
+        <p>Receipt #: {{ receipt.receipt_number }}</p>
+        <p>Cashier: {{ receipt.cashier }}</p>
+        <p>Date: {{ receipt.created_at }}</p>
+        <hr>
+        {% for item in receipt.items.all %}
+            <p>{{ item.product_name }} x{{ item.quantity }}  {{ item.subtotal }}</p>
+        {% endfor %}
+        <hr>
+        <p>Subtotal: {{ receipt.total_amount }}</p>
+        <p>Tax ({{ receipt.tax_rate }}%): {{ receipt.tax_amount }}</p>
+        <p class="bold">Total: {{ receipt.grand_total }}</p>
+        <p>Paid: {{ receipt.amount_paid }}</p>
+        <p>Change: {{ receipt.change_given }}</p>
+        <div class="center">
+            <img src="data:image/png;base64,{{ promptpay_qr }}" class="qr">
+            <p>Scan to Pay via PromptPay</p>
+        </div>
+        <hr>
+        <div class="center">Thank you for shopping!</div>
+    </div>
+</body>
+</html>

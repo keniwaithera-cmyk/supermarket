@@ -1,0 +1,109 @@
+{% extends 'supermarket/base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">{{ title }}</h2>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Back</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="data-card">
+            <div class="p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label>{{ field.label }}</label>
+
+                            {% if field.name == 'barcode_number' and show_scanner %}
+                                <div class="d-flex gap-2">
+                                    {{ field }}
+                                    <button type="button" onclick="startScan()" class="btn btn-outline-secondary px-3" title="Use camera to scan">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                                <div style="color:var(--muted);font-size:0.78rem;margin-top:4px;">
+                                    <i class="fas fa-info-circle"></i> Connect a USB barcode scanner and scan directly into this field, or type manually.
+                                </div>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+
+                            {% if field.errors %}
+                                <div style="color:#ff5050;font-size:0.82rem;margin-top:4px;">{{ field.errors.0 }}</div>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <div style="color:var(--muted);font-size:0.78rem;margin-top:3px;">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    {% if show_scanner and product and product.barcode_image %}
+                    <div class="mb-3 p-3" style="background:var(--dark);border-radius:8px;border:1px solid var(--border);">
+                        <label>Current Barcode</label>
+                        <div style="background:#fff;display:inline-block;padding:10px;border-radius:6px;margin-top:6px;">
+                            <img src="{{ product.barcode_image.url }}" alt="Barcode" style="max-width:200px;height:auto;display:block;">
+                        </div>
+                        <div style="margin-top:8px;">
+                            <a href="{% url 'product_barcode' product.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                <i class="fas fa-print me-1"></i>Print Label
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary px-4">Save</button>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if show_scanner %}
+    <div class="col-md-4">
+        <div class="data-card">
+            <div class="data-card-header"><i class="fas fa-barcode me-2"></i>Barcode Tips</div>
+            <div class="p-3" style="font-size:0.85rem;color:var(--muted);line-height:1.8;">
+                <p><strong style="color:var(--text);">USB Scanner:</strong> Plug in your barcode scanner and click the Barcode Number field. Scan the product — the number fills automatically.</p>
+                <p><strong style="color:var(--text);">Manual Entry:</strong> Type the barcode number (EAN-13, Code128, etc.) directly.</p>
+                <p><strong style="color:var(--text);">Auto-Generated:</strong> If left blank, the SKU is used as the barcode. A scannable Code128 image is generated automatically on save.</p>
+                <hr style="border-color:var(--border);">
+                <p style="margin:0;"><i class="fas fa-lightbulb" style="color:var(--green);"></i> The barcode image is generated after saving — you can then print labels from the product list.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Auto-focus barcode field when scanner is present
+{% if show_scanner %}
+document.addEventListener('DOMContentLoaded', function() {
+    const barcodeField = document.getElementById('id_barcode_number');
+    if (barcodeField && !barcodeField.value) {
+        // Don't steal focus from first field
+    }
+    // Accept scan input from USB scanner (ends with Enter)
+    if (barcodeField) {
+        barcodeField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Move focus to next field after scan
+                const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
+                const idx = inputs.indexOf(barcodeField);
+                if (inputs[idx + 1]) inputs[idx + 1].focus();
+            }
+        });
+    }
+});
+
+function startScan() {
+    alert('Point your USB barcode scanner at a product and scan.\nMake sure the Barcode Number field is focused first.');
+    document.getElementById('id_barcode_number').focus();
+}
+{% endif %}
+</script>
+{% endblock %}
