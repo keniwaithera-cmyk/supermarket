@@ -123,7 +123,34 @@ updateOnlineStatus();
 
 let lastKeyTime = 0;
 let isScannerInput = false;
+// ─── BARCODE LOOKUP ─────────────────────────────────────────
+async function lookupBarcode() {
+    const code = barcodeInput.value.trim();
+    if (!code) return;
 
+    scanResult.innerHTML = '<span style="color:var(--muted);">🔍 Looking up...</span>';
+
+    try {
+        const res  = await fetch(`/barcode/lookup/?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
+
+        if (data.found) {
+            addToCart(data);
+            scanResult.innerHTML = `<span style="color:var(--green);">✅ Added: <strong>${data.name}</strong> — KES ${data.price}</span>`;
+            barcodeInput.style.borderColor = '#1a9e72';
+            setTimeout(() => barcodeInput.style.borderColor = '', 600);
+        } else {
+            scanResult.innerHTML = `<span style="color:#ff5050;">❌ ${data.error}</span>`;
+            barcodeInput.style.borderColor = '#ff5050';
+            setTimeout(() => barcodeInput.style.borderColor = '', 800);
+        }
+    } catch (err) {
+        scanResult.innerHTML = `<span style="color:#ff5050;">❌ Network error. Try again.</span>`;
+    }
+
+    barcodeInput.value = '';
+    barcodeInput.focus();
+}
 barcodeInput.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         barcodeInput.value = '';
@@ -149,57 +176,12 @@ barcodeInput.addEventListener('input', function() {
 
     if (!code) return;
 
-    if (isScannerInput) {
-        // Scanner is typing — wait for it to finish (400ms silence)
-        scanTimer = setTimeout(() => {
-            isScannerInput = false;
-            lookupBarcode();
-        }, 400);
-    } else {
-        // Manual typing — wait longer before auto-searching (800ms)
-        // Only auto-search if input looks like a barcode (all digits, 4+ chars)
-        if (/^\d{4,}$/.test(code)) {
-            scanTimer = setTimeout(() => {
-                lookupBarcode();
-            }, 600);
-        }
-    }
+    // Auto-lookup after 1 second of no typing — works for ANY input
+    scanTimer = setTimeout(() => {
+        isScannerInput = false;
+        lookupBarcode();
+    }, 1000);
 });
-
-// ─── BARCODE LOOKUP ─────────────────────────────────────────
-async function lookupBarcode() {
-    const code = barcodeInput.value.trim();
-    if (!code) return;
-
-    scanResult.innerHTML = '<span style="color:var(--muted);">🔍 Looking up...</span>';
-
-    try {
-        const res  = await fetch(`/barcode/lookup/?code=${encodeURIComponent(code)}`);
-        const data = await res.json();
-
-        if (data.found) {
-            addToCart(data);
-            scanResult.innerHTML = `<span style="color:var(--green);">✅ Added: <strong>${data.name}</strong> — KES ${data.price}</span>`;
-            // Flash green on input to confirm
-            barcodeInput.style.borderColor = '#1a9e72';
-            setTimeout(() => barcodeInput.style.borderColor = '', 600);
-        } else {
-            scanResult.innerHTML = `<span style="color:#ff5050;">❌ ${data.error}</span>`;
-            barcodeInput.style.borderColor = '#ff5050';
-            setTimeout(() => barcodeInput.style.borderColor = '', 800);
-        }
-    } catch (err) {
-        if (!navigator.onLine) {
-            scanResult.innerHTML = `<span style="color:#ff9800;">⚠️ Offline — cannot lookup barcode</span>`;
-        } else {
-            scanResult.innerHTML = `<span style="color:#ff5050;">❌ Network error. Try again.</span>`;
-        }
-    }
-
-    barcodeInput.value = '';
-    barcodeInput.focus();
-}
-
 // ─── CART FUNCTIONS ─────────────────────────────────────────
 function addToCart(product) {
     const existing = cart.find(i => i.product_id === product.id);

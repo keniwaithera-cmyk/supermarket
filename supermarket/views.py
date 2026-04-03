@@ -50,7 +50,10 @@ def barcode_lookup(request):
     if not code:
         return JsonResponse({'found': False, 'error': 'No barcode provided'})
 
-    product = Product.objects.filter(Q(barcode_number=code) | Q(sku=code), is_active=True).first()
+    product = Product.objects.filter(
+        Q(barcode_number=code) | Q(sku=code) | Q(name__icontains=code),
+        is_active=True
+    ).first()
     if product:
         return JsonResponse({
             'found': True,
