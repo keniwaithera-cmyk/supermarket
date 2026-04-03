@@ -1,4 +1,5 @@
-import os
+import os, sys
+sys.path.insert(0, '/home/YOURUSERNAME/supermarket')
+os.environ['DJANGO_SETTINGS_MODULE'] = 'supermarket_project.settings'
 from django.core.wsgi import get_wsgi_application
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'supermarket_project.settings')
 application = get_wsgi_application()
