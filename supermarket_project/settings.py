@@ -3,9 +3,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-supermarket-secret-key-change-in-production'
+DEBUG = True  # change back to True for local development
 
-DEBUG = False
-ALLOWED_HOSTS = ['YOURUSERNAME.pythonanywhere.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'keniwaithera-cmyk.pythonanywhere.com']
+
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
